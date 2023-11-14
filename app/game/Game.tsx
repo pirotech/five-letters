@@ -34,7 +34,7 @@ type GameStore = {
   looser: boolean;
 };
 
-const secretWord = 'рулон';
+const secretWord = 'малыш';
 
 const NEXT_LINE_LETTER = 'next_line';
 const MAX_LETTERS_IN_WORD = 5;
