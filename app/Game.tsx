@@ -1,9 +1,19 @@
-'use client'
+'use client';
 import React, { useEffect, useState } from 'react';
 import { create } from 'zustand';
 import classNames from 'classnames';
 
 import styles from './Game.module.scss';
+
+const key =
+  'dict.1.1.20231113T195812Z.60b6e818334d7876.b85aeb41f551a76db17a5ce2018e01403f4caf9b';
+const findWord = async (text: string): Promise<{ def: any[] }> => {
+  return fetch(
+    `https://dictionary.yandex.net/api/v1/dicservice.json/lookup?key=${key}&lang=ru-ru&text=${text}`,
+  ).then(async (response) => {
+    return await response.json();
+  });
+};
 
 type Letter = {
   value: string;
@@ -17,6 +27,8 @@ type GameStore = {
   typeLetter(value: Letter): void;
   checkWord(): void;
   alphabet: Letter[];
+  error: string;
+  setError(value: string): void;
   congrats: boolean;
   looser: boolean;
 };
@@ -25,11 +37,12 @@ const secretWord = 'слово';
 
 const NEXT_LINE_LETTER = 'next_line';
 const MAX_LETTERS_IN_WORD = 5;
-const MAX_WORDS = 5;
+const MAX_WORDS = 6;
 const fillArray = (number: number, getValue: () => any) =>
   new Array(number).fill('').map(() => getValue());
-const getEmptyLine = (): Letter[] => fillArray(MAX_LETTERS_IN_WORD, () => ({ value: '' }));
-const useGameState = create<GameStore>((set) => ({
+const getEmptyLine = (): Letter[] =>
+  fillArray(MAX_LETTERS_IN_WORD, () => ({ value: '' }));
+const useGameState = create<GameStore>((set, get) => ({
   field: fillArray(MAX_WORDS, getEmptyLine),
   currentLineNumber: 0,
   typeLetter(value) {
@@ -48,41 +61,57 @@ const useGameState = create<GameStore>((set) => ({
       field[currentLineNumber] = currentLine;
       return {
         field: [...field],
+        error: '',
       };
     });
   },
   checkWord() {
-    set(({ field, currentLineNumber, alphabet }) => {
-      const word = field[currentLineNumber];
+    const { field, currentLineNumber, setError } = get();
+    const currentLine = field[currentLineNumber];
+    const text = currentLine.map((item) => item.value).join('');
 
-      if (word.some((item) => item.value === '')) {
-        return {};
+    findWord(text).then((response) => {
+      if (response.def.length > 0) {
+        set(({ field, currentLineNumber, alphabet }) => {
+          const word = field[currentLineNumber];
+
+          if (word.some((item) => item.value === '')) {
+            return {};
+          }
+
+          const newWord = word.map((letter, index) => {
+            let newLetter = { ...letter };
+            if (secretWord.includes(letter.value)) {
+              newLetter = { ...newLetter, included: true };
+            }
+            if (secretWord[index] === word[index].value) {
+              newLetter = { ...newLetter, placed: true };
+            }
+            return newLetter;
+          });
+          field[currentLineNumber] = newWord;
+
+          const newAlphabet = alphabet.map((key) => {
+            const foundLetter = newWord.find(
+              (letter) => letter.value === key.value,
+            );
+            return foundLetter ?? key;
+          });
+
+          return {
+            field: [...field],
+            currentLineNumber: currentLineNumber + 1,
+            alphabet: newAlphabet,
+            error: '',
+            congrats: newWord.every((item) => item.placed),
+            looser:
+              currentLineNumber === MAX_WORDS - 1 &&
+              !newWord.every((item) => item.placed),
+          };
+        });
+      } else {
+        setError('Такого слова нет!');
       }
-
-      const newWord = word.map((letter, index) => {
-        let newLetter = { ...letter };
-        if (secretWord.includes(letter.value)) {
-          newLetter = { ...newLetter, included: true };
-        }
-        if (secretWord[index] === word[index].value) {
-          newLetter = { ...newLetter, placed: true };
-        }
-        return newLetter;
-      });
-      field[currentLineNumber] = newWord;
-
-      const newAlphabet = alphabet.map((key) => {
-        const foundLetter = newWord.find((letter) => letter.value === key.value);
-        return foundLetter ?? key;
-      });
-
-      return {
-        field: [...field],
-        currentLineNumber: currentLineNumber + 1,
-        alphabet: newAlphabet,
-        congrats: newWord.every((item) => item.placed),
-        looser: currentLineNumber === MAX_WORDS - 1 && !newWord.every((item) => item.placed),
-      };
     });
   },
   alphabet: [
@@ -122,6 +151,10 @@ const useGameState = create<GameStore>((set) => ({
     { value: 'ю' },
     { value: 'ё' },
   ],
+  error: '',
+  setError(value: string) {
+    set({ error: value });
+  },
   congrats: false,
   looser: false,
 }));
@@ -131,10 +164,10 @@ export const Game: React.FC = () => {
   const typeLetter = useGameState((state) => state.typeLetter);
   const checkWord = useGameState((state) => state.checkWord);
   const alphabet = useGameState((state) => state.alphabet);
+  const error = useGameState((state) => state.error);
+  const setError = useGameState((state) => state.setError);
   const congrats = useGameState((state) => state.congrats);
   const looser = useGameState((state) => state.looser);
-
-  const [error, setError] = useState(false);
 
   const makeHandleKeyClick = (letter: Letter) => () => {
     typeLetter({ value: letter.value });
@@ -145,6 +178,7 @@ export const Game: React.FC = () => {
       if (event.altKey || event.ctrlKey || event.metaKey) {
         return;
       }
+
       if (event.key === 'Enter') {
         checkWord();
       }
@@ -152,21 +186,15 @@ export const Game: React.FC = () => {
         typeLetter({ value: event.key });
       } else {
         if (event.key.length === 1) {
-          setError((old) => {
-            if (!old) {
-              setTimeout(() => {
-                setError(false);
-              }, 500);
-              return true;
-            }
-            return old;
-          });
+          if (!error) {
+            setError('Неправильная раскладка');
+          }
         }
       }
     };
     window.addEventListener('keyup', handler);
     return () => window.removeEventListener('keyup', handler);
-  }, [typeLetter]);
+  }, [typeLetter, error, setError]);
 
   return (
     <div className={styles.gameWrapper}>
@@ -187,6 +215,9 @@ export const Game: React.FC = () => {
             ))}
           </div>
         ))}
+      </div>
+      <div className={classNames(styles.error, error && styles.error_shown)}>
+        {error}
       </div>
       <div className={styles.keyboard}>
         {alphabet
@@ -223,7 +254,10 @@ export const Game: React.FC = () => {
         <button className={styles.button} onClick={checkWord}>
           Проверить
         </button>
-        <button className={styles.button} onClick={() => typeLetter({ value: 'Backspace' })}>
+        <button
+          className={styles.button}
+          onClick={() => typeLetter({ value: 'Backspace' })}
+        >
           &#9003;
         </button>
       </div>

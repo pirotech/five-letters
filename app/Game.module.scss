@@ -32,6 +32,21 @@
   }
 }
 
+.error {
+  opacity: 0;
+  width: 300px;
+  height: 30px;
+  margin: 0 auto;
+  text-align: center;
+  transition: opacity 0.2s ease-in-out;
+  font-size: 16px;
+  color: #d02222;
+
+  &_shown {
+    opacity: 1;
+  }
+}
+
 .word {
   display: flex;
   gap: 4px;

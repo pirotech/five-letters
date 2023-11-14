@@ -1,9 +1,12 @@
-import {Game} from "@/app/Game";
+import { Game } from '@/app/Game';
 
 export default function Home() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-12" style={{ backgroundColor: '#fcfcfc'}}>
+    <main
+      className="flex min-h-screen flex-col items-center justify-between p-12"
+      style={{ backgroundColor: '#fcfcfc' }}
+    >
       <Game />
     </main>
-  )
+  );
 }
