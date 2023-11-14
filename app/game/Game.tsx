@@ -17,6 +17,7 @@ const findWord = async (text: string): Promise<{ def: any[] }> => {
 
 type Letter = {
   value: string;
+  used?: boolean;
   included?: boolean;
   placed?: boolean;
 };
@@ -80,7 +81,7 @@ const useGameState = create<GameStore>((set, get) => ({
           }
 
           const newWord = word.map((letter, index) => {
-            let newLetter = { ...letter };
+            let newLetter: Letter = { ...letter, used: true };
             if (secretWord.includes(letter.value)) {
               newLetter = { ...newLetter, included: true };
             }
@@ -95,7 +96,7 @@ const useGameState = create<GameStore>((set, get) => ({
             const foundLetter = newWord.find(
               (letter) => letter.value === key.value,
             );
-            return foundLetter ?? key;
+            return foundLetter ? { ...key, ...foundLetter } : key;
           });
 
           return {
@@ -238,6 +239,7 @@ export const Game: React.FC = () => {
                 <div
                   className={classNames(
                     styles.keyboard__key,
+                    key.used && styles.keyboard__key_used,
                     key.included && styles.keyboard__key_included,
                     key.placed && styles.keyboard__key_placed,
                   )}

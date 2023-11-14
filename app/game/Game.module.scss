@@ -109,12 +109,19 @@
     cursor: pointer;
     user-select: none;
 
+    &_used {
+      background-color: #d0d0d0;
+      border-color: #eeecec;
+    }
+
     &_included {
       background-color: #fff3dd;
+      border-color: #f6eee0;
     }
 
     &_placed {
       background-color: #ffe577;
+      border-color: #f1e099;
     }
 
     @media (max-width: 768px) {
