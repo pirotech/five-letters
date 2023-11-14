@@ -206,12 +206,13 @@ export const Game: React.FC = () => {
               <div
                 className={classNames(
                   styles.letter,
+                  letter.used && styles.letter_used,
                   letter.included && styles.letter_included,
                   letter.placed && styles.letter_placed,
                 )}
                 key={index}
               >
-                {letter.value}
+                <span>{letter.value}</span>
               </div>
             ))}
           </div>
