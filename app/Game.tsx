@@ -269,7 +269,7 @@ export const Game: React.FC = () => {
         </div>
       )}
 
-      {looser && <div className={styles.looser}>Loooooser!</div>}
+      {looser && <div className={styles.looser}>Looooser!</div>}
     </div>
   );
 };
