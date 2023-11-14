@@ -140,12 +140,11 @@ export const Game: React.FC = () => {
     typeLetter({ value: letter.value });
   };
 
-  const handleCheck = () => {
-    checkWord();
-  };
-
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
+      if (event.altKey || event.ctrlKey || event.metaKey) {
+        return;
+      }
       if (event.key === 'Enter') {
         checkWord();
       }
@@ -220,15 +219,22 @@ export const Game: React.FC = () => {
             </div>
           ))}
       </div>
-      <button className={styles.button} onClick={handleCheck}>
-        Проверить
-      </button>
+      <div className={styles.buttons}>
+        <button className={styles.button} onClick={checkWord}>
+          Проверить
+        </button>
+        <button className={styles.button} onClick={() => typeLetter({ value: 'Backspace' })}>
+          &#9003;
+        </button>
+      </div>
+
       {congrats && (
         <div className={styles.congrats}>
           Congrats!
           <img src="https://media1.giphy.com/media/Vuw9m5wXviFIQ/giphy.gif" />
         </div>
       )}
+
       {looser && <div className={styles.looser}>Loooooser!</div>}
     </div>
   );
