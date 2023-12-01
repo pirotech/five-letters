@@ -1,8 +1,8 @@
 'use client';
 import React, { useEffect } from 'react';
 import { useGameState } from '@/app/game/useGameState';
-import { Field } from '@/app/game/field/field';
-import { Keyboard } from '@/app/game/keyboard/keyboard';
+import { Field } from '@/app/game/field';
+import { Keyboard } from '@/app/game/keyboard';
 
 import styles from './Game.module.scss';
 
